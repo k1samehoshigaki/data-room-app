@@ -8,9 +8,11 @@ import { useRooms } from '@/hooks/use-rooms';
 
 export default function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
-  const { data: rooms = [] } = useRooms();
+  const { data: rooms = [], isLoading: roomsLoading } = useRooms();
   const room = rooms.find((r) => r.id === roomId);
   const { data: contents, isLoading } = useFolderContents(roomId, null);
+
+  const readOnly = !roomsLoading && !room;
 
   return (
     <AppShell>
@@ -20,6 +22,7 @@ export default function RoomPage() {
         folderId={null}
         contents={contents}
         isLoading={isLoading}
+        readOnly={readOnly}
       />
     </AppShell>
   );

@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { FilesService } from './files.service';
 import { DataRoomsService } from '../data-rooms/data-rooms.service';
+import { SharingService } from '../sharing/sharing.service';
 
 const presignSchema = z.object({
   fileName: z.string().min(1),
@@ -45,7 +46,17 @@ export class FilesController {
   constructor(
     private readonly filesService: FilesService,
     private readonly dataRoomsService: DataRoomsService,
+    private readonly sharingService: SharingService,
   ) {}
+
+  private async assertReadAccess(fileId: string, userId: string): Promise<void> {
+    const file = await this.filesService.findById(fileId);
+    if (!file) throw new BadRequestException('File not found');
+    const isOwner = await this.dataRoomsService.isOwner(file.dataRoomId, userId);
+    if (isOwner) return;
+    const access = await this.sharingService.resolveAccess(userId, 'FILE', fileId);
+    if (!access.granted) throw new ForbiddenException();
+  }
 
   @Post('presign')
   async presign(@Body() body: unknown, @CurrentUser() user: { sub: string }) {
@@ -88,20 +99,14 @@ export class FilesController {
 
   @Get(':id/download-url')
   async getDownloadUrl(@Param('id') id: string, @CurrentUser() user: { sub: string }) {
-    const file = await this.filesService.findById(id);
-    if (!file) throw new BadRequestException('File not found');
-    const isOwner = await this.dataRoomsService.isOwner(file.dataRoomId, user.sub);
-    if (!isOwner) throw new ForbiddenException();
+    await this.assertReadAccess(id, user.sub);
     const url = await this.filesService.getDownloadUrl(id);
     return { url };
   }
 
   @Get(':id/preview-url')
   async getPreviewUrl(@Param('id') id: string, @CurrentUser() user: { sub: string }) {
-    const file = await this.filesService.findById(id);
-    if (!file) throw new BadRequestException('File not found');
-    const isOwner = await this.dataRoomsService.isOwner(file.dataRoomId, user.sub);
-    if (!isOwner) throw new ForbiddenException();
+    await this.assertReadAccess(id, user.sub);
     const url = await this.filesService.getPreviewUrl(id);
     return { url };
   }

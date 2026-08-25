@@ -1,5 +1,16 @@
 import axios from 'axios';
 
+export interface SharedWithMeItem {
+  id: string;
+  resourceType: 'DATA_ROOM' | 'FOLDER' | 'FILE';
+  resourceId: string;
+  resourceName: string | null;
+  dataRoomId: string | null;
+  role: string;
+  createdAt: string;
+  createdBy: { id: string; name: string; email: string; avatarUrl: string | null };
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 
 export const api = axios.create({
@@ -76,6 +87,7 @@ export const sharingApi = {
   listLinks: (resourceType: string, resourceId: string) =>
     api.get('/sharing/links', { params: { resourceType, resourceId } }),
   revokeLink: (id: string) => api.delete(`/sharing/links/${id}`),
+  sharedWithMe: () => api.get<SharedWithMeItem[]>('/sharing/shared-with-me'),
   getPublic: (token: string, folderId?: string) =>
     axios.get(`${API_URL}/share/${token}`, { params: folderId ? { folderId } : {} }),
 };

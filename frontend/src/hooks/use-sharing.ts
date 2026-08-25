@@ -3,6 +3,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sharingApi } from '@/lib/api';
 
+export function useSharedWithMe() {
+  return useQuery({
+    queryKey: ['shared-with-me'],
+    queryFn: () => sharingApi.sharedWithMe().then((r) => r.data),
+  });
+}
+
 export function useSharePermissions(resourceType: string, resourceId: string) {
   return useQuery({
     queryKey: ['sharing-permissions', resourceType, resourceId],

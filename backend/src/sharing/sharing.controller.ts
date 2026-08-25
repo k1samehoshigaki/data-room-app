@@ -121,4 +121,9 @@ export class SharingController {
   revokeLink(@Param('id') id: string, @CurrentUser() user: { sub: string }) {
     return this.sharingService.revokeLink(id, user.sub);
   }
+
+  @Get('shared-with-me')
+  sharedWithMe(@CurrentUser() user: { sub: string }) {
+    return this.sharingService.listSharedWithMe(user.sub);
+  }
 }

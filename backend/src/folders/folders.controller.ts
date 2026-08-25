@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { FoldersService } from './folders.service';
 import { DataRoomsService } from '../data-rooms/data-rooms.service';
+import { SharingService } from '../sharing/sharing.service';
 
 const createSchema = z.object({
   name: z.string().min(1).max(255),
@@ -33,6 +34,7 @@ export class FoldersController {
   constructor(
     private readonly foldersService: FoldersService,
     private readonly dataRoomsService: DataRoomsService,
+    private readonly sharingService: SharingService,
   ) {}
 
   @Get()
@@ -42,8 +44,16 @@ export class FoldersController {
     @CurrentUser() user: { sub: string },
   ) {
     if (!dataRoomId) throw new BadRequestException('dataRoomId is required');
+
     const isOwner = await this.dataRoomsService.isOwner(dataRoomId, user.sub);
-    if (!isOwner) throw new ForbiddenException();
+    if (!isOwner) {
+      // Non-owners may still have SharePermission on this folder or its data room
+      const resourceType = folderId ? 'FOLDER' : 'DATA_ROOM';
+      const resourceId = folderId ?? dataRoomId;
+      const access = await this.sharingService.resolveAccess(user.sub, resourceType, resourceId);
+      if (!access.granted) throw new ForbiddenException();
+    }
+
     return this.foldersService.getContents(dataRoomId, folderId ?? null);
   }
 

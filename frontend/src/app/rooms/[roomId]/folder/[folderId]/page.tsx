@@ -8,9 +8,12 @@ import { useRooms } from '@/hooks/use-rooms';
 
 export default function FolderPage() {
   const { roomId, folderId } = useParams<{ roomId: string; folderId: string }>();
-  const { data: rooms = [] } = useRooms();
+  const { data: rooms = [], isLoading: roomsLoading } = useRooms();
   const room = rooms.find((r) => r.id === roomId);
   const { data: contents, isLoading, isError } = useFolderContents(roomId, folderId);
+
+  // If the room is not in the user's own rooms list (and rooms have loaded), treat as read-only shared access
+  const readOnly = !roomsLoading && !room;
 
   if (isError) {
     return (
@@ -29,10 +32,11 @@ export default function FolderPage() {
     <AppShell>
       <FileBrowser
         roomId={roomId}
-        roomName={room?.name}
+        roomName={room?.name ?? contents?.folder?.name}
         folderId={folderId}
         contents={contents}
         isLoading={isLoading}
+        readOnly={readOnly}
       />
     </AppShell>
   );

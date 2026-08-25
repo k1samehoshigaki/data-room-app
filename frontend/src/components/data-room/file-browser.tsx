@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { FolderPlus, Upload, Share2, Search } from 'lucide-react';
+import { FolderPlus, Upload, Share2, Search, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -62,11 +62,12 @@ export function FileBrowser({
     ) ?? [];
 
   const isEmpty = !isLoading && filteredFolders.length === 0 && filteredFiles.length === 0;
+  const totalItems = filteredFolders.length + filteredFiles.length;
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-5">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <Breadcrumbs
           roomId={roomId}
           roomName={roomName}
@@ -75,20 +76,32 @@ export function FileBrowser({
         />
 
         {!readOnly && (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => openShareModal('DATA_ROOM', roomId)}>
-              <Share2 className="h-4 w-4" />
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => openShareModal('DATA_ROOM', roomId)}
+            >
+              <Share2 className="h-3.5 w-3.5" />
               Share
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setCreatingFolder(true)}>
-              <FolderPlus className="h-4 w-4" />
-              New Folder
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => setCreatingFolder(true)}
+            >
+              <FolderPlus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">New Folder</span>
+              <span className="sm:hidden">Folder</span>
             </Button>
             <label className="cursor-pointer">
-              <Button variant="default" size="sm" asChild>
+              <Button variant="default" size="sm" className="h-8 text-xs" asChild>
                 <span>
-                  <Upload className="h-4 w-4" />
-                  Upload Files
+                  <Upload className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Upload Files</span>
+                  <span className="sm:hidden">Upload</span>
                 </span>
               </Button>
               <input
@@ -109,9 +122,9 @@ export function FileBrowser({
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
         <Input
-          className="pl-9"
+          className="pl-9 h-9 text-sm bg-card border-border/70 focus:border-primary/50"
           placeholder="Filter by name..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -122,49 +135,49 @@ export function FileBrowser({
       <div
         {...getRootProps()}
         className={cn(
-          'flex-1 rounded-lg min-h-0 transition-colors',
-          isDragActive && 'ring-2 ring-primary bg-primary/5',
+          'relative rounded-xl transition-all duration-200 min-h-48',
+          isDragActive && 'ring-2 ring-primary ring-offset-2 bg-primary/3',
         )}
       >
         <input {...getInputProps()} />
 
         {isDragActive && (
-          <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-            <div className="bg-background border-2 border-primary border-dashed rounded-xl px-8 py-6 text-center">
+          <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none rounded-xl">
+            <div className="bg-background/95 backdrop-blur border-2 border-primary border-dashed rounded-xl px-10 py-8 text-center shadow-lg">
               <Upload className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <p className="font-medium">Drop files to upload</p>
+              <p className="font-semibold text-sm">Drop files to upload</p>
             </div>
           </div>
         )}
 
         {isLoading ? (
           <div className="space-y-2">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full rounded-lg" />
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full rounded-xl" />
             ))}
           </div>
         ) : isEmpty ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="rounded-full bg-muted p-4 mb-4">
-              <FolderPlus className="h-8 w-8 text-muted-foreground" />
+            <div className="w-16 h-16 rounded-2xl bg-muted/80 flex items-center justify-center mb-4">
+              <FolderOpen className="h-7 w-7 text-muted-foreground" />
             </div>
-            <p className="font-medium text-muted-foreground">
-              {search ? 'No items match your search' : 'This folder is empty'}
+            <p className="font-medium text-muted-foreground text-sm">
+              {search ? 'No items match your filter' : 'This folder is empty'}
             </p>
             {!search && !readOnly && (
-              <p className="text-sm text-muted-foreground mt-1">
-                Drag & drop files or use the Upload button
+              <p className="text-xs text-muted-foreground/70 mt-1.5">
+                Drag & drop files or click Upload
               </p>
             )}
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-4">
             {filteredFolders.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-muted-foreground px-1 mb-1">
-                  FOLDERS ({filteredFolders.length})
+              <section>
+                <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider px-1 mb-2">
+                  Folders · {filteredFolders.length}
                 </p>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   {filteredFolders.map((folder) => (
                     <FolderItem
                       key={folder.id}
@@ -174,20 +187,26 @@ export function FileBrowser({
                     />
                   ))}
                 </div>
-              </div>
+              </section>
             )}
 
             {filteredFiles.length > 0 && (
-              <div className={filteredFolders.length > 0 ? 'mt-3' : ''}>
-                <p className="text-xs font-medium text-muted-foreground px-1 mb-1">
-                  FILES ({filteredFiles.length})
+              <section className={filteredFolders.length > 0 ? 'mt-2' : ''}>
+                <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider px-1 mb-2">
+                  Files · {filteredFiles.length}
                 </p>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   {filteredFiles.map((file) => (
                     <FileItem key={file.id} file={file} readOnly={readOnly} />
                   ))}
                 </div>
-              </div>
+              </section>
+            )}
+
+            {totalItems > 0 && (
+              <p className="text-xs text-muted-foreground/50 text-center pt-2 pb-1">
+                {totalItems} item{totalItems !== 1 ? 's' : ''}
+              </p>
             )}
           </div>
         )}

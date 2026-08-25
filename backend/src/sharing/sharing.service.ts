@@ -219,6 +219,48 @@ export class SharingService {
     return file?.dataRoomId ?? null;
   }
 
+  async listSharedWithMe(userId: string) {
+    const permissions = await this.prisma.sharePermission.findMany({
+      where: { granteeUserId: userId },
+      include: {
+        createdBy: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return Promise.all(
+      permissions.map(async (perm) => {
+        let resourceName: string | null = null;
+        let dataRoomId: string | null = null;
+
+        if (perm.resourceType === 'DATA_ROOM') {
+          const room = await this.prisma.dataRoom.findUnique({
+            where: { id: perm.resourceId },
+            select: { name: true },
+          });
+          resourceName = room?.name ?? null;
+          dataRoomId = perm.resourceId;
+        } else if (perm.resourceType === 'FOLDER') {
+          const folder = await this.prisma.folder.findUnique({
+            where: { id: perm.resourceId },
+            select: { name: true, dataRoomId: true },
+          });
+          resourceName = folder?.name ?? null;
+          dataRoomId = folder?.dataRoomId ?? null;
+        } else if (perm.resourceType === 'FILE') {
+          const file = await this.prisma.file.findUnique({
+            where: { id: perm.resourceId },
+            select: { name: true, mimeType: true, dataRoomId: true },
+          });
+          resourceName = file?.name ?? null;
+          dataRoomId = file?.dataRoomId ?? null;
+        }
+
+        return { ...perm, resourceName, dataRoomId };
+      }),
+    );
+  }
+
   async getPublicResource(token: string) {
     const link = await this.prisma.shareLink.findFirst({
       where: {
