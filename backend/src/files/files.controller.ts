@@ -33,6 +33,7 @@ const registerSchema = z.object({
   mimeType: z.string().min(1),
   folderId: z.string().nullable().optional(),
   dataRoomId: z.string().min(1),
+  conflictStrategy: z.enum(['reject', 'auto-rename', 'version']).optional(),
 });
 
 const renameSchema = z.object({ name: z.string().min(1).max(255) });
@@ -74,6 +75,15 @@ export class FilesController {
     const isOwner = await this.dataRoomsService.isOwner(dataRoomId, user.sub);
     if (!isOwner) throw new ForbiddenException();
     return this.filesService.search(dataRoomId, q);
+  }
+
+  @Get(':id/versions')
+  async getVersions(@Param('id') id: string, @CurrentUser() user: { sub: string }) {
+    const file = await this.filesService.findById(id);
+    if (!file) throw new BadRequestException('File not found');
+    const isOwner = await this.dataRoomsService.isOwner(file.dataRoomId, user.sub);
+    if (!isOwner) throw new ForbiddenException();
+    return this.filesService.getVersions(id);
   }
 
   @Get(':id/download-url')

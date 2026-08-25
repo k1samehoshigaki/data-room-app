@@ -1,0 +1,9 @@
+---
+description: Rules for NestJS backend implementation
+globs: backend/**/*.ts, server/**/*.ts
+---
+- Use standard NestJS decorators and dependency injection.
+- Validate incoming requests with `ZodValidationPipe` or `ValidationPipe`.
+- Protect routes with JWT AuthGuards and granular SharingAccessGuards.
+- Use Presigned S3 URLs (`@aws-sdk/s3-request-presigner`) for direct file upload & download.
+- When generating delete operations for folders, ensure all nested entities in PostgreSQL and S3 are cleanly cleaned up or soft-handled.

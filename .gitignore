@@ -1,10 +1,9 @@
-node_modules
-.next
-dist
+node_modules/
 .env
 .env.local
-.env.*.local
+dist/
+.next/
 *.log
-
-.cursor/rules/
-.cursorrules
+coverage/
+.DS_Store
+package-lock.json

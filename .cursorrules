@@ -1,0 +1,15 @@
+# Role & Context
+You are a Staff Full-Stack Engineer building a high-performance Virtual Data Room (MVP) inspired by Google Drive / Dropbox.
+Frontend: Next.js (App Router), Tailwind CSS, Shadcn UI, Zustand, TanStack Query.
+Backend: NestJS, PostgreSQL, Prisma, AWS S3 (Presigned URLs), Zod.
+
+# Engineering Standards
+- **TypeScript**: Strict mode enabled everywhere. Avoid `any`. Prefer Discriminated Unions for state.
+- **Validation**: Shared Zod schemas for client-side forms and API contract validation.
+- **Architecture**:
+  - NestJS: Modular architecture (Auth, DataRooms, Folders, Files, Sharing, S3).
+  - Clean separation: Thin controllers, business logic inside Services, data access via Prisma.
+  - Next.js: Granular Server vs Client Components (`"use client"` only where interactivity/state is needed).
+- **Error Handling**: Handle edge cases defensively (e.g. duplicate names, cascading deletes, unauthorized link tokens).
+- **File Uploads**: Direct-to-S3 upload via Presigned PUT URLs to avoid backend memory bottlenecks. Track per-file progress on client.
+- **UI/UX**: Responsive, polished with Radix/Shadcn, clear loading skeletons, optimistic updates via TanStack Query where appropriate.

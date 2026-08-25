@@ -1,0 +1,9 @@
+---
+description: Rules for Next.js App Router and UI components
+globs: frontend/**/*.{ts,tsx}, web/**/*.{ts,tsx}
+---
+- Prefer React Server Components for initial data fetching where possible.
+- Use TanStack Query for client-side interactions, folder traversal, and cache invalidation.
+- Global UI states (Modals, Multi-file upload drawer, selection) must live in Zustand stores.
+- Implement Breadcrumbs navigation with dynamic route slugs (`/rooms/[roomId]/folder/[folderId]`).
+- PDF Preview: Render using browser-native iframe or `@react-pdf-viewer/core`.

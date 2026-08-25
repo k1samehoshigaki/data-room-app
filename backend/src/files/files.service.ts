@@ -53,12 +53,51 @@ export class FilesService {
     mimeType: string;
     folderId?: string | null;
     dataRoomId: string;
+    conflictStrategy?: 'reject' | 'auto-rename' | 'version';
   }) {
-    await this.checkNameConflict(data.dataRoomId, data.folderId ?? null, data.name);
+    const strategy = data.conflictStrategy ?? 'reject';
+
+    let finalName = data.name;
+    let existingFile: Awaited<ReturnType<typeof this.prisma.file.findFirst>> | null = null;
+
+    existingFile = await this.prisma.file.findFirst({
+      where: { dataRoomId: data.dataRoomId, folderId: data.folderId ?? null, name: data.name },
+    });
+
+    if (existingFile) {
+      if (strategy === 'reject') {
+        throw new ConflictException(`A file named "${data.name}" already exists here`);
+      } else if (strategy === 'auto-rename') {
+        finalName = await this.findUniqueName(data.dataRoomId, data.folderId ?? null, data.name);
+        existingFile = null;
+      } else if (strategy === 'version') {
+        // Create a new version of the existing file
+        const updated = await this.prisma.$transaction(async (tx) => {
+          const newVersion = existingFile!.currentVersion + 1;
+          await tx.fileVersion.create({
+            data: {
+              fileId: existingFile!.id,
+              storageKey: data.storageKey,
+              sizeBytes: BigInt(data.sizeBytes),
+              versionNumber: newVersion,
+            },
+          });
+          return tx.file.update({
+            where: { id: existingFile!.id },
+            data: {
+              storageKey: data.storageKey,
+              sizeBytes: BigInt(data.sizeBytes),
+              currentVersion: newVersion,
+            },
+          });
+        });
+        return serializeFile(updated);
+      }
+    }
 
     const file = await this.prisma.file.create({
       data: {
-        name: data.name,
+        name: finalName,
         storageKey: data.storageKey,
         sizeBytes: BigInt(data.sizeBytes),
         mimeType: data.mimeType,
@@ -68,6 +107,32 @@ export class FilesService {
     });
 
     return serializeFile(file);
+  }
+
+  private async findUniqueName(
+    dataRoomId: string,
+    folderId: string | null,
+    originalName: string,
+  ): Promise<string> {
+    const ext = originalName.includes('.') ? '.' + originalName.split('.').pop() : '';
+    const base = ext ? originalName.slice(0, -ext.length) : originalName;
+    let counter = 1;
+    let candidate = `${base} (${counter})${ext}`;
+    while (
+      await this.prisma.file.findFirst({ where: { dataRoomId, folderId, name: candidate } })
+    ) {
+      counter++;
+      candidate = `${base} (${counter})${ext}`;
+    }
+    return candidate;
+  }
+
+  async getVersions(fileId: string) {
+    const versions = await this.prisma.fileVersion.findMany({
+      where: { fileId },
+      orderBy: { versionNumber: 'desc' },
+    });
+    return versions.map((v) => ({ ...v, sizeBytes: v.sizeBytes.toString() }));
   }
 
   async findById(id: string): Promise<FileRecord | null> {
