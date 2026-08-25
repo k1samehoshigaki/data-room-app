@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?
+  googleId     String?  @unique
+  name         String
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  dataRooms          DataRoom[]
+  sharePermissions   SharePermission[] @relation("GranteePermissions")
+  createdPermissions SharePermission[] @relation("CreatedPermissions")
+  createdLinks       ShareLink[]
+}
+
+model DataRoom {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  folders Folder[]
+  files   File[]
+
+  @@index([ownerId])
+}
+
+model Folder {
+  id         String   @id @default(cuid())
+  dataRoomId String
+  parentId   String?
+  name       String
+  path       String
+  depth      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  dataRoom DataRoom @relation(fields: [dataRoomId], references: [id], onDelete: Cascade)
+  parent   Folder?  @relation("FolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children Folder[] @relation("FolderTree")
+  files    File[]
+
+  @@index([dataRoomId])
+  @@index([parentId])
+  @@index([path])
+  @@index([dataRoomId, parentId, name])
+}
+
+model File {
+  id             String   @id @default(cuid())
+  dataRoomId     String
+  folderId       String?
+  name           String
+  storageKey     String   @unique
+  sizeBytes      BigInt
+  mimeType       String
+  currentVersion Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  dataRoom DataRoom      @relation(fields: [dataRoomId], references: [id], onDelete: Cascade)
+  folder   Folder?       @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  versions FileVersion[]
+
+  @@index([dataRoomId])
+  @@index([folderId])
+  @@index([dataRoomId, name])
+}
+
+model FileVersion {
+  id            String   @id @default(cuid())
+  fileId        String
+  storageKey    String
+  sizeBytes     BigInt
+  versionNumber Int
+  createdAt     DateTime @default(now())
+
+  file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([fileId])
+}
+
+enum ResourceType {
+  DATA_ROOM
+  FOLDER
+  FILE
+}
+
+enum ShareRole {
+  VIEWER
+}
+
+model SharePermission {
+  id            String       @id @default(cuid())
+  resourceType  ResourceType
+  resourceId    String
+  granteeUserId String
+  role          ShareRole    @default(VIEWER)
+  createdById   String
+  createdAt     DateTime     @default(now())
+
+  grantee   User @relation("GranteePermissions", fields: [granteeUserId], references: [id], onDelete: Cascade)
+  createdBy User @relation("CreatedPermissions", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@unique([resourceType, resourceId, granteeUserId])
+  @@index([granteeUserId])
+  @@index([resourceType, resourceId])
+}
+
+model ShareLink {
+  id           String       @id @default(cuid())
+  resourceType ResourceType
+  resourceId   String
+  token        String       @unique @default(cuid())
+  role         ShareRole    @default(VIEWER)
+  expiresAt    DateTime?
+  revokedAt    DateTime?
+  createdById  String
+  createdAt    DateTime     @default(now())
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([resourceType, resourceId])
+}
