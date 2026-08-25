@@ -14,7 +14,10 @@ RUN npm install
 COPY backend/ .
 # Generate Prisma client BEFORE TypeScript compilation
 RUN npx prisma generate
-RUN npm run build
+# Compile TypeScript directly (bypasses NestJS CLI exit-code masking)
+RUN rm -rf dist && npx tsc -p tsconfig.build.json
+# Fail explicitly if compilation produced no output
+RUN test -f dist/main.js || (echo "ERROR: dist/main.js not found after build" && exit 1)
 
 # --- Runtime stage ---
 FROM base AS runner
