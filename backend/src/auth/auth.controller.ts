@@ -84,9 +84,8 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   googleCallback(@Req() req: { user: object }, @Res() res: ExpressResponse) {
     const accessToken = this.authService.issueToken(req.user as Parameters<typeof this.authService.issueToken>[0]);
-    res.cookie('access_token', accessToken, COOKIE_OPTIONS);
     const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
-    res.redirect(`${frontendUrl}/rooms`);
+    res.redirect(`${frontendUrl}/auth/callback?token=${accessToken}`);
   }
 
   @UseGuards(JwtAuthGuard)

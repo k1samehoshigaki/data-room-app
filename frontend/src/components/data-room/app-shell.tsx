@@ -37,6 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     await authApi.logout().catch(() => null);
+    await fetch('/api/auth/clear-token', { method: 'POST' }).catch(() => null);
     logout();
     router.replace('/login');
   };

@@ -43,6 +43,11 @@ export function RegisterForm() {
     setLoading(true);
     try {
       const res = await authApi.register({ name, email, password });
+      await fetch('/api/auth/set-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: res.data.accessToken }),
+      });
       setUser(res.data.user);
       router.replace('/rooms');
     } catch (e) {
