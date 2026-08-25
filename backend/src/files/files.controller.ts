@@ -96,6 +96,16 @@ export class FilesController {
     return { url };
   }
 
+  @Get(':id/preview-url')
+  async getPreviewUrl(@Param('id') id: string, @CurrentUser() user: { sub: string }) {
+    const file = await this.filesService.findById(id);
+    if (!file) throw new BadRequestException('File not found');
+    const isOwner = await this.dataRoomsService.isOwner(file.dataRoomId, user.sub);
+    if (!isOwner) throw new ForbiddenException();
+    const url = await this.filesService.getPreviewUrl(id);
+    return { url };
+  }
+
   @Patch(':id/rename')
   async rename(
     @Param('id') id: string,

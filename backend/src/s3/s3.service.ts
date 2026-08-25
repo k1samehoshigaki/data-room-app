@@ -44,10 +44,13 @@ export class S3Service {
     return getSignedUrl(this.client, command, { expiresIn: 600 });
   }
 
-  async getPresignedDownloadUrl(storageKey: string): Promise<string> {
+  async getPresignedDownloadUrl(storageKey: string, fileName?: string): Promise<string> {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: storageKey,
+      ...(fileName
+        ? { ResponseContentDisposition: `attachment; filename="${encodeURIComponent(fileName)}"` }
+        : {}),
     });
     return getSignedUrl(this.client, command, { expiresIn: 3600 });
   }

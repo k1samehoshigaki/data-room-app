@@ -142,6 +142,12 @@ export class FilesService {
   async getDownloadUrl(id: string): Promise<string> {
     const file = await this.findById(id);
     if (!file) throw new NotFoundException('File not found');
+    return this.s3.getPresignedDownloadUrl(file.storageKey, file.name);
+  }
+
+  async getPreviewUrl(id: string): Promise<string> {
+    const file = await this.findById(id);
+    if (!file) throw new NotFoundException('File not found');
     return this.s3.getPresignedDownloadUrl(file.storageKey);
   }
 

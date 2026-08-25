@@ -4,10 +4,10 @@ import { create } from 'zustand';
 
 interface UIState {
   shareModal: { open: boolean; resourceType: string; resourceId: string } | null;
-  pdfViewer: { open: boolean; fileId: string; fileName: string } | null;
+  pdfViewer: { open: boolean; fileId: string; fileName: string; mimeType: string } | null;
   openShareModal: (resourceType: string, resourceId: string) => void;
   closeShareModal: () => void;
-  openPdfViewer: (fileId: string, fileName: string) => void;
+  openPdfViewer: (fileId: string, fileName: string, mimeType: string) => void;
   closePdfViewer: () => void;
 }
 
@@ -17,7 +17,7 @@ export const useUIStore = create<UIState>((set) => ({
   openShareModal: (resourceType, resourceId) =>
     set({ shareModal: { open: true, resourceType, resourceId } }),
   closeShareModal: () => set({ shareModal: null }),
-  openPdfViewer: (fileId, fileName) =>
-    set({ pdfViewer: { open: true, fileId, fileName } }),
+  openPdfViewer: (fileId, fileName, mimeType) =>
+    set({ pdfViewer: { open: true, fileId, fileName, mimeType } }),
   closePdfViewer: () => set({ pdfViewer: null }),
 }));

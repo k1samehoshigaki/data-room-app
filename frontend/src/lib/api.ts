@@ -59,6 +59,7 @@ export const filesApi = {
   register: (data: { name: string; storageKey: string; sizeBytes: number; mimeType: string; dataRoomId: string; folderId?: string | null }) =>
     api.post('/files', data),
   getDownloadUrl: (id: string) => api.get<{ url: string }>(`/files/${id}/download-url`),
+  getPreviewUrl: (id: string) => api.get<{ url: string }>(`/files/${id}/preview-url`),
   rename: (id: string, name: string) => api.patch(`/files/${id}/rename`, { name }),
   move: (id: string, folderId: string | null) => api.patch(`/files/${id}/move`, { folderId }),
   delete: (id: string) => api.delete(`/files/${id}`),

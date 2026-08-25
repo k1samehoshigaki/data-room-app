@@ -8,11 +8,11 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/User.js'
-export type * from './models/DataRoom.js'
-export type * from './models/Folder.js'
-export type * from './models/File.js'
-export type * from './models/FileVersion.js'
-export type * from './models/SharePermission.js'
-export type * from './models/ShareLink.js'
-export type * from './commonInputTypes.js'
+export type * from './models/User'
+export type * from './models/DataRoom'
+export type * from './models/Folder'
+export type * from './models/File'
+export type * from './models/FileVersion'
+export type * from './models/SharePermission'
+export type * from './models/ShareLink'
+export type * from './commonInputTypes'

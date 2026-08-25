@@ -40,15 +40,16 @@ export function FileItem({ file, readOnly }: FileItemProps) {
 
   const handleDownload = async () => {
     const res = await filesApi.getDownloadUrl(file.id);
-    window.open(res.data.url, '_blank');
+    const a = document.createElement('a');
+    a.href = res.data.url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const handlePreview = () => {
-    if (file.mimeType === 'application/pdf') {
-      openPdfViewer(file.id, file.name);
-    } else {
-      handleDownload();
-    }
+    openPdfViewer(file.id, file.name, file.mimeType);
   };
 
   return (
