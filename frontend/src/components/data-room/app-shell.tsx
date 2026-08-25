@@ -11,6 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { DataRoomLogoIcon } from '@/components/ui/data-room-logo';
 import { useAuthStore } from '@/stores/auth-store';
 import { authApi } from '@/lib/api';
 import { ShareModal } from '@/components/modals/share-modal';
@@ -47,12 +48,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="max-w-6xl mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/rooms" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary shadow-sm shadow-primary/30 group-hover:shadow-primary/50 transition-shadow">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-4 h-4">
-                <path d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15z" />
-                <path d="M1.5 10.143V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.143A4.483 4.483 0 0019.5 12h-15a4.483 4.483 0 00-3 1.143z" />
-              </svg>
-            </div>
+            <DataRoomLogoIcon
+              fill="white"
+              className="bg-primary shadow-sm shadow-primary/30 group-hover:shadow-primary/50 transition-shadow"
+            />
             <span className="font-semibold text-sm tracking-tight hidden sm:block">DataRoom</span>
           </Link>
 

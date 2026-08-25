@@ -49,6 +49,16 @@ export class FilesController {
     private readonly sharingService: SharingService,
   ) {}
 
+  /** Resolves a file and asserts the user owns its data room. Returns the file for reuse. */
+  private async assertWriteAccess(fileId: string, userId: string) {
+    const file = await this.filesService.findById(fileId);
+    if (!file) throw new BadRequestException('File not found');
+    const isOwner = await this.dataRoomsService.isOwner(file.dataRoomId, userId);
+    if (!isOwner) throw new ForbiddenException();
+    return file;
+  }
+
+  /** Asserts the user owns the file's data room OR has an explicit SharePermission. */
   private async assertReadAccess(fileId: string, userId: string): Promise<void> {
     const file = await this.filesService.findById(fileId);
     if (!file) throw new BadRequestException('File not found');
@@ -90,10 +100,7 @@ export class FilesController {
 
   @Get(':id/versions')
   async getVersions(@Param('id') id: string, @CurrentUser() user: { sub: string }) {
-    const file = await this.filesService.findById(id);
-    if (!file) throw new BadRequestException('File not found');
-    const isOwner = await this.dataRoomsService.isOwner(file.dataRoomId, user.sub);
-    if (!isOwner) throw new ForbiddenException();
+    await this.assertWriteAccess(id, user.sub);
     return this.filesService.getVersions(id);
   }
 
@@ -119,10 +126,7 @@ export class FilesController {
   ) {
     const parsed = renameSchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
-    const file = await this.filesService.findById(id);
-    if (!file) throw new BadRequestException('File not found');
-    const isOwner = await this.dataRoomsService.isOwner(file.dataRoomId, user.sub);
-    if (!isOwner) throw new ForbiddenException();
+    await this.assertWriteAccess(id, user.sub);
     return this.filesService.rename(id, parsed.data.name);
   }
 
@@ -134,20 +138,14 @@ export class FilesController {
   ) {
     const parsed = moveSchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
-    const file = await this.filesService.findById(id);
-    if (!file) throw new BadRequestException('File not found');
-    const isOwner = await this.dataRoomsService.isOwner(file.dataRoomId, user.sub);
-    if (!isOwner) throw new ForbiddenException();
+    await this.assertWriteAccess(id, user.sub);
     return this.filesService.move(id, parsed.data.folderId);
   }
 
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
   async delete(@Param('id') id: string, @CurrentUser() user: { sub: string }) {
-    const file = await this.filesService.findById(id);
-    if (!file) throw new BadRequestException('File not found');
-    const isOwner = await this.dataRoomsService.isOwner(file.dataRoomId, user.sub);
-    if (!isOwner) throw new ForbiddenException();
+    await this.assertWriteAccess(id, user.sub);
     return this.filesService.delete(id);
   }
 }

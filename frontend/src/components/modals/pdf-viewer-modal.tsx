@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Loader2, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,8 @@ export function PdfViewerModal() {
     if (!pdfViewer?.open || !pdfViewer.fileId) return;
     const fileId = pdfViewer.fileId;
     let cancelled = false;
-    filesApi.getPreviewUrl(fileId)
+    filesApi
+      .getPreviewUrl(fileId)
       .then((res) => { if (!cancelled) setPreviewUrl(res.data.url); })
       .catch(() => { if (!cancelled) setPreviewUrl(null); });
     return () => {
@@ -23,8 +25,6 @@ export function PdfViewerModal() {
       setPreviewUrl(null);
     };
   }, [pdfViewer?.open, pdfViewer?.fileId]);
-
-  const isLoading = pdfViewer?.open && !previewUrl;
 
   const handleDownload = async () => {
     if (!pdfViewer?.fileId || !pdfViewer?.fileName) return;
@@ -37,7 +37,8 @@ export function PdfViewerModal() {
     document.body.removeChild(a);
   };
 
-  const isImage = useMemo(() => pdfViewer?.mimeType?.startsWith('image/'), [pdfViewer?.mimeType]);
+  const isImage = pdfViewer?.mimeType?.startsWith('image/') ?? false;
+  const isLoading = pdfViewer?.open && !previewUrl;
 
   return (
     <Dialog open={pdfViewer?.open ?? false} onOpenChange={(v) => { if (!v) closePdfViewer(); }}>
@@ -51,24 +52,24 @@ export function PdfViewerModal() {
             </Button>
           )}
         </DialogHeader>
+
         <div className="flex-1 min-h-0 overflow-auto flex items-center justify-center bg-muted/30">
-          {isLoading && (
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          )}
+          {isLoading && <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />}
+
           {previewUrl && isImage && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={previewUrl}
-              alt={pdfViewer?.fileName}
-              className="max-w-full max-h-full object-contain"
-            />
+            <div className="relative w-full h-full">
+              <Image
+                src={previewUrl}
+                alt={pdfViewer?.fileName ?? 'Preview'}
+                fill
+                className="object-contain"
+                unoptimized
+              />
+            </div>
           )}
+
           {previewUrl && !isImage && (
-            <iframe
-              src={previewUrl}
-              className="w-full h-full"
-              title={pdfViewer?.fileName}
-            />
+            <iframe src={previewUrl} className="w-full h-full" title={pdfViewer?.fileName} />
           )}
         </div>
       </DialogContent>

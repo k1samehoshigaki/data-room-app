@@ -37,6 +37,15 @@ export class FoldersController {
     private readonly sharingService: SharingService,
   ) {}
 
+  /** Resolves a folder and asserts the user owns its data room. Returns the folder for reuse. */
+  private async assertWriteAccess(folderId: string, userId: string) {
+    const folder = await this.foldersService.findById(folderId);
+    if (!folder) throw new BadRequestException('Folder not found');
+    const isOwner = await this.dataRoomsService.isOwner(folder.dataRoomId, userId);
+    if (!isOwner) throw new ForbiddenException();
+    return folder;
+  }
+
   @Get()
   async getContents(
     @Query('dataRoomId') dataRoomId: string,
@@ -59,10 +68,7 @@ export class FoldersController {
 
   @Get(':id/stats')
   async getStats(@Param('id') id: string, @CurrentUser() user: { sub: string }) {
-    const folder = await this.foldersService.findById(id);
-    if (!folder) throw new BadRequestException('Folder not found');
-    const isOwner = await this.dataRoomsService.isOwner(folder.dataRoomId, user.sub);
-    if (!isOwner) throw new ForbiddenException();
+    await this.assertWriteAccess(id, user.sub);
     return this.foldersService.getStats(id);
   }
 
@@ -83,20 +89,14 @@ export class FoldersController {
   ) {
     const parsed = updateSchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
-    const folder = await this.foldersService.findById(id);
-    if (!folder) throw new BadRequestException('Folder not found');
-    const isOwner = await this.dataRoomsService.isOwner(folder.dataRoomId, user.sub);
-    if (!isOwner) throw new ForbiddenException();
+    await this.assertWriteAccess(id, user.sub);
     return this.foldersService.update(id, parsed.data.name);
   }
 
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
   async delete(@Param('id') id: string, @CurrentUser() user: { sub: string }) {
-    const folder = await this.foldersService.findById(id);
-    if (!folder) throw new BadRequestException('Folder not found');
-    const isOwner = await this.dataRoomsService.isOwner(folder.dataRoomId, user.sub);
-    if (!isOwner) throw new ForbiddenException();
+    await this.assertWriteAccess(id, user.sub);
     return this.foldersService.delete(id);
   }
 }

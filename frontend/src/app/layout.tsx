@@ -8,6 +8,11 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-geist' });
 export const metadata: Metadata = {
   title: 'DataRoom — Secure Document Management',
   description: 'A secure virtual data room for managing and sharing sensitive documents.',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
