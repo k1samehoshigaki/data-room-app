@@ -12,8 +12,4 @@
     "db:migrate": "npm run prisma:migrate --workspace=backend",
     "db:generate": "npm run prisma:generate --workspace=backend"
   },
-  "dependencies": {
-    "@prisma/adapter-pg": "^7.10.0",
-    "pg": "^8.23.0"
-  }
 }
