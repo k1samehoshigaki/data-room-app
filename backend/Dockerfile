@@ -4,14 +4,14 @@ RUN npm install -g npm@latest
 
 # --- Production dependencies only ---
 FROM base AS deps
-COPY package.json ./
+COPY backend/package.json ./
 RUN npm install --omit=dev
 
 # --- Build stage ---
 FROM base AS builder
-COPY package.json ./
+COPY backend/package.json ./
 RUN npm install
-COPY . .
+COPY backend/ .
 # Generate Prisma client BEFORE TypeScript compilation
 RUN npx prisma generate
 RUN npm run build
@@ -26,7 +26,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
-COPY package.json ./
+COPY backend/package.json ./
 
 EXPOSE 3002
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
