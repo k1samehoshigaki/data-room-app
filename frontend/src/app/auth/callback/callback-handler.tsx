@@ -9,7 +9,7 @@ import { useAuthStore } from '@/stores/auth-store';
 export function CallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const setUser = useAuthStore((s) => s.setUser);
+  const { setUser, setToken } = useAuthStore();
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -17,6 +17,9 @@ export function CallbackHandler() {
       router.replace('/login');
       return;
     }
+
+    // Store token first so the axios interceptor can attach it to /me request.
+    setToken(token);
 
     fetch('/api/auth/set-token', {
       method: 'POST',
@@ -28,7 +31,10 @@ export function CallbackHandler() {
         setUser(res.data);
         router.replace('/rooms');
       })
-      .catch(() => router.replace('/login'));
+      .catch(() => {
+        setToken(null);
+        router.replace('/login');
+      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

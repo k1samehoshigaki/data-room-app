@@ -25,7 +25,7 @@ type FormData = z.infer<typeof schema>;
 export function LoginForm() {
   const router = useRouter();
   const { addToast } = useToast();
-  const setUser = useAuthStore((s) => s.setUser);
+  const { setUser, setToken } = useAuthStore();
   const [loading, setLoading] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
@@ -36,6 +36,7 @@ export function LoginForm() {
     setLoading(true);
     try {
       const res = await authApi.login(data);
+      setToken(res.data.accessToken);
       await fetch('/api/auth/set-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

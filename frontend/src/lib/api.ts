@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '@/stores/auth-store';
 
 export interface SharedWithMeItem {
   id: string;
@@ -17,6 +18,16 @@ export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
+});
+
+// Attach the stored JWT as a Bearer token on every request so cross-domain
+// API calls work regardless of third-party cookie restrictions.
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().accessToken;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 api.interceptors.response.use(

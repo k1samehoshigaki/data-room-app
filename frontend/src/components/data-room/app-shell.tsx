@@ -20,14 +20,14 @@ import { UploadDrawer } from '@/components/upload/upload-drawer';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { user, setUser, logout } = useAuthStore();
+  const { user, setUser, logout, accessToken, setToken } = useAuthStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    // After Google OAuth, the cookie is set but the Zustand store is empty.
-    // Fetch /me to hydrate the store with full user data (incl. avatarUrl).
-    if (!user) {
+    // After Google OAuth the store may be empty (token is in URL, not yet stored).
+    // Only attempt /me when we have a stored access token; otherwise there's nothing to auth with.
+    if (!user && accessToken) {
       authApi.me()
         .then((res) => setUser(res.data))
         .catch(() => null);
@@ -38,6 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const handleLogout = async () => {
     await authApi.logout().catch(() => null);
     await fetch('/api/auth/clear-token', { method: 'POST' }).catch(() => null);
+    setToken(null);
     logout();
     router.replace('/login');
   };

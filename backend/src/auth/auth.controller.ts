@@ -30,16 +30,6 @@ const registerSchema = z.object({
   password: z.string().min(8),
 });
 
-const isProduction = process.env.NODE_ENV === 'production';
-
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: isProduction,
-  sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  path: '/',
-};
-
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -47,30 +37,53 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
+  private getCookieOptions() {
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production' ||
+      process.env.NODE_ENV === 'production';
+
+    return {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    };
+  }
+
   @Post('register')
-  async register(@Body() body: unknown, @Res({ passthrough: true }) res: ExpressResponse) {
+  async register(
+    @Body() body: unknown,
+    @Res({ passthrough: true }) res: ExpressResponse,
+  ) {
     const parsed = registerSchema.safeParse(body);
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.flatten().fieldErrors);
     }
     const result = await this.authService.register(parsed.data);
-    res.cookie('access_token', result.accessToken, COOKIE_OPTIONS);
+    res.cookie('access_token', result.accessToken, this.getCookieOptions());
     return result;
   }
 
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  login(@Req() req: { user: object }, @Res({ passthrough: true }) res: ExpressResponse) {
-    const result = this.authService.loginWithUser(req.user as Parameters<typeof this.authService.loginWithUser>[0]);
-    res.cookie('access_token', result.accessToken, COOKIE_OPTIONS);
+  login(
+    @Req() req: { user: object },
+    @Res({ passthrough: true }) res: ExpressResponse,
+  ) {
+    const result = this.authService.loginWithUser(
+      req.user as Parameters<typeof this.authService.loginWithUser>[0],
+    );
+    res.cookie('access_token', result.accessToken, this.getCookieOptions());
     return result;
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('logout')
   logout(@Res({ passthrough: true }) res: ExpressResponse) {
-    res.clearCookie('access_token', { path: '/' });
+    const { maxAge: _, ...clearOptions } = this.getCookieOptions();
+    res.clearCookie('access_token', clearOptions);
     return { success: true };
   }
 
@@ -83,8 +96,13 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   googleCallback(@Req() req: { user: object }, @Res() res: ExpressResponse) {
-    const accessToken = this.authService.issueToken(req.user as Parameters<typeof this.authService.issueToken>[0]);
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const accessToken = this.authService.issueToken(
+      req.user as Parameters<typeof this.authService.issueToken>[0],
+    );
+    const frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000',
+    );
     res.redirect(`${frontendUrl}/auth/callback?token=${accessToken}`);
   }
 
